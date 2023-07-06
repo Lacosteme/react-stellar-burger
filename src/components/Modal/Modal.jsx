@@ -4,6 +4,8 @@ import ModalOverlay from "../ModalOverlay/ModalOverlay";
 import { CloseIcon } from "@ya.praktikum/react-developer-burger-ui-components";
 import { useEffect } from "react";
 
+const reactModal = document.querySelector('#modals');
+
 export default function Modal({ children, modalName, handleClose }) {
   useEffect(() => {
     const handleEsc = (evt) => {
@@ -32,6 +34,6 @@ export default function Modal({ children, modalName, handleClose }) {
       </div>
       <ModalOverlay handleClose={handleClose} />
     </div>,
-    document.body
+    reactModal
   );
 }

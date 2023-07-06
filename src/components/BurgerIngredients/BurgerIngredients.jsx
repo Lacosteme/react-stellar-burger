@@ -137,7 +137,7 @@ export default function BurgerIngredients() {
         </div>
       </div>
       {visible && (
-        <Modal handleClose={handleClosePopup} headName={"Детали ингридиента"}>
+        <Modal handleClose={handleClosePopup} modalName={"Детали ингредиента"} >
           <IngredientDetails />
         </Modal>
       )}
