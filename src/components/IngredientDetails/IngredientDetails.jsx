@@ -1,10 +1,12 @@
 import React from 'react';
 import PropTypes from 'prop-types';
+import { useSelector } from "react-redux"
 import styles from "./IngredientDetails.module.css";
 
 
-export default function IngredientDetails({ data }) {
+export default function IngredientDetails() {
 
+    const { data } = useSelector(state => state.ingredientDetails)
     return (
         <>
             <img className={styles.image} src={data.image_large} alt={data.name}/>
@@ -31,16 +33,3 @@ export default function IngredientDetails({ data }) {
     )
 }
 
-const dataPropTypes = PropTypes.shape({
-    name: PropTypes.string.isRequired,
-    price: PropTypes.number.isRequired,
-    calories: PropTypes.number.isRequired,
-    carbohydrates: PropTypes.number.isRequired,
-    fat: PropTypes.number.isRequired,
-    image_large: PropTypes.string.isRequired,
-    proteins: PropTypes.number.isRequired,
-})
-
-IngredientDetails.propTypes = {
-    data: dataPropTypes.isRequired
-}

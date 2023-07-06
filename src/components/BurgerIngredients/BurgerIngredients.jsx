@@ -1,83 +1,146 @@
-import React from 'react';
-import PropTypes from 'prop-types';
-import ingredientPropType from "../../utils/prop-types"
-import { Tab } from "@ya.praktikum/react-developer-burger-ui-components"
+import React from "react";
+import { useSelector, useDispatch } from "react-redux";
+import { Tab } from "@ya.praktikum/react-developer-burger-ui-components";
 import BurgerIngredient from "../BurgerIngredient/BurgerIngredient";
-import styles from "./BurgerIngredients.module.css"
+import styles from "./BurgerIngredients.module.css";
 import IngredientDetails from "../IngredientDetails/IngredientDetails";
 import Modal from "../Modal/Modal";
+import { getIngredients } from "../../services/actions/burgerIngredients";
+import { useInView } from "react-intersection-observer";
+import { hideIngredient } from "../../services/actions/ingredientDetails";
 
-export default function BurgerIngredients({ data, isLoading, hasError }) {
+export default function BurgerIngredients() {
+  const { ingredients, ingredientsRequest, ingredientsFailed } = useSelector(
+    (state) => state.ingredients
+  );
+  const { visible } = useSelector((state) => state.ingredientDetails);
+  const dispatch = useDispatch();
 
-    const [popup, setPopup] = React.useState({
-    visible: false,
-    popupData: []
-    });
+  React.useEffect(() => {
+    dispatch(getIngredients());
+  }, []);
 
-    const [current, setCurrent] = React.useState('one')
+  function handleClosePopup() {
+    dispatch(hideIngredient());
+  }
 
-    const handleClose = () => {
-        setPopup({...popup, visible:false, popupData: []})
+  const [current, setCurrent] = React.useState("one");
+  const { ref: bunsRef, inView: inViewBuns } = useInView();
+  const { ref: sauceRef, inView: inViewSauce } = useInView();
+  const { ref: mainRef, inView: inViewMain } = useInView();
+
+  function tabSwitch(viewBuns, viewSauce, viewMain) {
+    if (viewBuns) {
+      return setCurrent("one");
     }
+    if (viewSauce) {
+      return setCurrent("two");
+    }
+    if (viewMain) {
+      return setCurrent("three");
+    }
+  }
 
-    const showIngredient = (data) => {
-        setPopup({...popup, visible: true, popupData: data})
-        console.log(data)
-      }
+  const handleClickScroll = (current) => {
+    const element = document.getElementById(`${current}`);
+    if (element) {
+      element.scrollIntoView({ behavior: "smooth" });
+    }
+  };
 
-    const { visible, popupData } = popup
+  React.useEffect(() => {
+    tabSwitch(inViewBuns, inViewSauce, inViewMain);
+  }, [inViewBuns, inViewSauce, inViewMain]);
 
-    return (
-        <section className={styles.ingridients}>
-            <p className="text text_type_main-large mb-5">
-                Соберите бургер
-            </p>
-            <div className={styles.tab}>
-                <Tab value="one" active={current === 'one'} onClick={setCurrent}>
-                    Булки
-                </Tab>
-                <Tab value="two" active={current === 'two'} onClick={setCurrent}>
-                    Соусы
-                </Tab>
-                <Tab value="three" active={current === 'three'} onClick={setCurrent}>
-                    Начинки
-                </Tab>
-            </div>
-            <div className={styles.menu}>
-                <p className="text text_type_main-medium mt-10 mb-6">Булки</p>
-                <div className={styles.grid}>
-                    {isLoading && 'Загрузка...'}
-                    {hasError && 'Error'}
-                    {!isLoading && !hasError && data.length && data.map((item) => 
-                        item.type === "bun" &&
-                        <BurgerIngredient showIngredient={showIngredient} key={item._id} data={item}/>)}
-                </div>
-                <p className="text text_type_main-medium mt-10 mb-6">Соусы</p>
-                <div className={styles.grid}>
-                    {isLoading && 'Загрузка...'}
-                    {hasError && 'Error'}
-                    {!isLoading && !hasError && data.length && data.map((item) => 
-                        item.type === "sauce" && 
-                        <BurgerIngredient showIngredient={showIngredient} key={item._id} data={item}/>)}
-                </div>
-                <p className="text text_type_main-medium mt-10 mb-6">Начинки</p>
-                <div className={styles.grid}>
-                    {isLoading && 'Загрузка...'}
-                    {hasError && 'Error'}
-                    {!isLoading && !hasError && data.length && data.map((item) => 
-                        item.type === "main" && 
-                        <BurgerIngredient showIngredient={showIngredient} key={item._id} data={item}/>)}
-                </div>
-            </div>
-            {visible &&  <Modal handleClose={handleClose}>
-                            <IngredientDetails data={popupData}/>
-                        </Modal>}
-        </section>
-    )
-}
-
-BurgerIngredients.propTypes = {
-    data: PropTypes.arrayOf(ingredientPropType.isRequired),
-    isLoading: PropTypes.bool.isRequired,
-    hasError: PropTypes.bool.isRequired
+  return (
+    <section className={styles.ingredients}>
+      <p className="text text_type_main-large mb-5">Соберите бургер</p>
+      <div className={styles.tab}>
+        <Tab
+          value="one"
+          active={current === "one"}
+          onClick={() => {
+            handleClickScroll("one");
+          }}
+        >
+          Булки
+        </Tab>
+        <Tab
+          href="#two"
+          value="two"
+          active={current === "two"}
+          onClick={() => {
+            handleClickScroll("two");
+          }}
+        >
+          Соусы
+        </Tab>
+        <Tab
+          href="#three"
+          value="three"
+          active={current === "three"}
+          onClick={() => {
+            handleClickScroll("three");
+          }}
+        >
+          Начинки
+        </Tab>
+      </div>
+      <div className={styles.menu}>
+        <p id="one" className="text text_type_main-medium mt-10 mb-6">
+          Булки
+        </p>
+        <div ref={bunsRef} className={styles.grid}>
+          {ingredientsRequest && "Загрузка..."}
+          {ingredientsFailed && "Произошла ошибка"}
+          {!ingredientsRequest &&
+            !ingredientsFailed &&
+            ingredients.length &&
+            ingredients.map(
+              (item) =>
+                item.type === "bun" && (
+                  <BurgerIngredient key={item._id} data={item} />
+                )
+            )}
+        </div>
+        <p id="two" className="text text_type_main-medium mt-10 mb-6">
+          Соусы
+        </p>
+        <div ref={sauceRef} className={styles.grid}>
+          {ingredientsRequest && "Загрузка..."}
+          {ingredientsFailed && "Произошла ошибка"}
+          {!ingredientsRequest &&
+            !ingredientsFailed &&
+            ingredients.length &&
+            ingredients.map(
+              (item) =>
+                item.type === "sauce" && (
+                  <BurgerIngredient key={item._id} data={item} />
+                )
+            )}
+        </div>
+        <p id="three" className="text text_type_main-medium mt-10 mb-6">
+          Начинки
+        </p>
+        <div ref={mainRef} className={styles.grid}>
+          {ingredientsRequest && "Загрузка..."}
+          {ingredientsFailed && "Произошла ошибка"}
+          {!ingredientsRequest &&
+            !ingredientsFailed &&
+            ingredients.length &&
+            ingredients.map(
+              (item) =>
+                item.type === "main" && (
+                  <BurgerIngredient key={item._id} data={item} />
+                )
+            )}
+        </div>
+      </div>
+      {visible && (
+        <Modal handleClose={handleClosePopup} headName={"Детали ингридиента"}>
+          <IngredientDetails />
+        </Modal>
+      )}
+    </section>
+  );
 }
