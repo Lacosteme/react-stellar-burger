@@ -1,4 +1,4 @@
-import React from 'react';
+import React from "react";
 import {
   Logo,
   BurgerIcon,
@@ -35,4 +35,4 @@ export default function AppHeader() {
       </div>
     </header>
   );
-};
+}

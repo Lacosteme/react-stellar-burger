@@ -32,6 +32,6 @@ export default function Modal({ children, modalName, handleClose }) {
       </div>
       <ModalOverlay handleClose={handleClose} />
     </div>,
-     document.body
+    document.body
   );
 }
