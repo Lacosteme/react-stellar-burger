@@ -1,104 +1,90 @@
-import React from 'react';
+import React from "react";
 import styles from "./BurgerConstructor.module.css";
 import {
-  ConstructorElement,
-  DragIcon,
   Button,
   CurrencyIcon,
 } from "@ya.praktikum/react-developer-burger-ui-components";
+import { useSelector, useDispatch } from "react-redux";
 import OrderDetails from "../OrderDetails/OrderDetails";
 import Modal from "../Modal/Modal";
+import { useDrop } from "react-dnd";
+import BurgerConstructorElement from "../BurgerConstructorElement/BurgerConstructorElement";
+import { addIngredient } from "../../services/actions/burgerConstructor";
+import { hideOrder, sendOrder } from "../../services/actions/orderDetails";
 
-export default function BurgerConstructor () {
-  const [popup, setPopup] = React.useState({ visible: false });
+export default function BurgerConstructor() {
+  const { draggedElements, bunsPrice, elementsPrice } = useSelector(
+    (state) => state.elements
+  );
+  const { popupVisible, orderRequest } = useSelector(
+    (state) => state.orderDetails
+  );
 
-  const handleOpenPopup = () => {
-    setPopup({ visible: true });
-  };
-  const handleClosePopup = () => {
-    setPopup({ visible: false });
+  const dispatch = useDispatch();
+
+  function handleClosePopup() {
+    dispatch(hideOrder());
+  }
+
+  const [, dropTarget] = useDrop({
+    accept: "ingredient",
+    drop(item) {
+      dispatch(addIngredient(item));
+    },
+  });
+
+  const orderIt = (draggedElements) => {
+    dispatch(sendOrder(draggedElements));
   };
 
   return (
-    <section className={styles.constructor}>
+    <section ref={dropTarget} className={styles.constructor}>
       <ul className={styles.list}>
-        <li className={styles.bun}>
-          <ConstructorElement
-            type="top"
-            isLocked={true}
-            text="Краторная булка N-200i (верх)"
-            price={20}
-            thumbnail={"https://code.s3.yandex.net/react/code/bun-02.png"}
-          />
-        </li>
+        {draggedElements.map(
+          (item) =>
+            item.type === "bun" && (
+              <BurgerConstructorElement
+                key={item.uid + "top"}
+                element={item}
+                topOrBottom={"top"}
+                extraName={" (верх)"}
+              />
+            )
+        )}
         <ul className={styles.element}>
-          <li className={styles.element_item}>
-            <DragIcon type="primary" />
-            <ConstructorElement
-              text="Соус традиционный галактический"
-              price={30}
-              thumbnail={"https://code.s3.yandex.net/react/code/sauce-03.png"}
-              className="ml-2"
-            />
-          </li>
-          <li className={styles.element_item}>
-            <DragIcon type="primary" />
-            <ConstructorElement
-              text="Мясо бессмертных моллюсков Protostomia"
-              price={300}
-              thumbnail={"https://code.s3.yandex.net/react/code/meat-02.png"}
-              className="ml-2"
-            />
-          </li>
-          <li className={styles.element_item}>
-            <DragIcon type="primary" />
-            <ConstructorElement
-              text="Плоды Фалленианского дерева"
-              price={80}
-              thumbnail={"https://code.s3.yandex.net/react/code/sp_1.png"}
-              className="ml-2"
-            />
-          </li>
-          <li className={styles.element_item}>
-            <DragIcon type="primary" />
-            <ConstructorElement
-              text="Хрустящие минеральные кольца"
-              price={80}
-              thumbnail={
-                "https://code.s3.yandex.net/react/code/mineral_rings.png"
-              }
-              className="ml-2"
-            />
-          </li>
-          <li className={styles.element_item}>
-            <DragIcon type="primary" />
-            <ConstructorElement
-              text="Хрустящие минеральные кольца"
-              price={70}
-              thumbnail={
-                "https://code.s3.yandex.net/react/code/mineral_rings.png"
-              }
-              className="ml-2"
-            />
-          </li>
+          {draggedElements.map(
+            (item, index) =>
+              item.type !== "bun" && (
+                <BurgerConstructorElement
+                  key={item.uid}
+                  index={index}
+                  element={item}
+                />
+              )
+          )}
         </ul>
-        <li className={styles.bun}>
-          <ConstructorElement
-            type="bottom"
-            isLocked={true}
-            text="Краторная булка N-200i (низ)"
-            price={80}
-            thumbnail={"https://code.s3.yandex.net/react/code/bun-02.png"}
-          />
-        </li>
+        {draggedElements.map(
+          (item) =>
+            item.type === "bun" && (
+              <BurgerConstructorElement
+                key={item.uid + "bottom"}
+                element={item}
+                topOrBottom={"bottom"}
+                extraName={" (низ)"}
+              />
+            )
+        )}
       </ul>
       <div className={styles.order}>
-        <p className="text text_type_digits-medium">660</p>
+        <p className="text text_type_digits-medium">
+          {bunsPrice + elementsPrice}
+        </p>
         <span className={styles.current}>
           <CurrencyIcon type="primary" />
         </span>
         <Button
-          onClick={handleOpenPopup}
+          onClick={() => orderIt(draggedElements)}
+          disabled={draggedElements.length ? false : true}
           htmlType="button"
           type="primary"
           size="large"
@@ -107,11 +93,14 @@ export default function BurgerConstructor () {
           Оформить заказ
         </Button>
       </div>
-      {popup.visible && (
+      {orderRequest && (
+        <Modal headName={"Загрузка..."} handleClose={handleClosePopup}></Modal>
+      )}
+      {popupVisible && (
         <Modal handleClose={handleClosePopup}>
-          <OrderDetails handleClose={handleClosePopup} />
+          <OrderDetails />
         </Modal>
       )}
     </section>
   );
-};
+}
